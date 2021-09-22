@@ -1,7 +1,9 @@
 import json, os, logging
 from azure.storage import queue
 from azure.storage.queue import (
-  QueueClient
+  QueueClient,
+        BinaryBase64EncodePolicy,
+        BinaryBase64DecodePolicy
 )
 from azure.storage.blob import (
   BlobServiceClient,
@@ -21,6 +23,7 @@ def main():
   blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
   queue_client = QueueClient.from_connection_string(connection_string, queue_name)
+
 
   log.info("Connected to queue service")
   
