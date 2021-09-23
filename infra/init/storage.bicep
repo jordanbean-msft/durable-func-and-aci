@@ -25,7 +25,17 @@ resource outputContainer 'Microsoft.Storage/storageAccounts/blobServices/contain
   name: '${storageAccount.name}/default/output'
 }
 
+resource blobCreatedEventGridTopic 'Microsoft.EventGrid/systemTopics@2021-06-01-preview' = {
+  name: 'NewInputBlobCreated'
+  location: resourceGroup().location
+  properties: {
+    source: storageAccount.id
+    topicType: 'Microsoft.Storage.StorageAccounts'
+  } 
+}
+
 output storageAccountName string = storageAccount.name
 output inputContainerName string = inputContainer.name
 output outputContainerName string = outputContainer.name
 output inputQueueName string = inputQueue.name
+output newBlobCreatedEventGridTopicName string = blobCreatedEventGridTopic.name
