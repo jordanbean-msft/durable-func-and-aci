@@ -1,45 +1,45 @@
-import json, os, logging
-from azure.storage import queue
+import os, logging
 from azure.storage.queue import (
-  QueueClient,
-        BinaryBase64EncodePolicy,
-        BinaryBase64DecodePolicy
+    QueueClient
 )
 from azure.storage.blob import (
-  BlobServiceClient,
-  BlobClient
+    BlobServiceClient,
+    BlobClient
 )
+import algorithm
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 def main():
-  log = logging.getLogger(__name__)
-  connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-  queue_name = os.getenv("AZURE_STORAGE_QUEUE_NAME")
-  input_blob_container_name = os.getenv("AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME")
-  output_blob_container_name = os.getenv("AZURE_STORAGE_OUTPUT_BLOB_CONTAINER_NAME")
-  #job_id = os.getenv()
+    log = logging.getLogger(__name__)
+    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    queue_name = os.getenv("AZURE_STORAGE_QUEUE_NAME")
+    input_blob_container_name = os.getenv("AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME")
+    output_blob_container_name = os.getenv("AZURE_STORAGE_OUTPUT_BLOB_CONTAINER_NAME")
+    
+    #job_id = os.getenv()
 
-  blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
-  queue_client = QueueClient.from_connection_string(connection_string, queue_name)
+    queue_client = QueueClient.from_connection_string(connection_string, queue_name)
 
+    log.info("Connected to queue service")
+    
+    messages = queue_client.receive_messages()
 
-  log.info("Connected to queue service")
-  
-  messages = queue_client.receive_messages()
+    log.info("Processing messages")
 
-  log.info("Processing messages")
+    for message in messages:
+      log.info("Processing message: " + message.id)
 
-  for message in messages:
-    log.info("Deleting message: " + message.content)
+      algorithm.compute(message.content)
 
-    #input_blob_client = blob_service_client.get_blob_client(conatiner=input_blob_container_name, blob="")
-    #output_blob_client = blob_service_client.get_blob_client(container=output_blob_container_name, blob="")
+      #input_blob_client = blob_service_client.get_blob_client(conatiner=input_blob_container_name, blob="")
+      #output_blob_client = blob_service_client.get_blob_client(container=output_blob_container_name, blob="")
 
-    queue_client.delete_message(message.id, message.pop_receipt)
+      queue_client.delete_message(message.id, message.pop_receipt)
 
-  log.info("Complete")
+    log.info("Complete")
 
 if __name__=="__main__":
-  main()
+    main()
