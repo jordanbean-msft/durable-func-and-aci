@@ -15,4 +15,4 @@ def main(event: func.EventGridEvent, client: df.DurableOrchestrationClient):
 
     logging.info('Python EventGrid trigger processed an event: %s', result)
 
-    client.raise_event(event.get_json()["instanceId"], 'ComputeComplete', event.get_json()["jobId"])
+    client.raise_event(event.get_json()["instance_id"], 'ComputeComplete', event.get_json()["input_id"])

@@ -10,12 +10,13 @@ import algorithm
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 def build_output_data(job_configuration, blob_service_client, output_blob_container_name, result):
-  path_to_output_file = f"{job_configuration['jobId']}/{job_configuration['fileName']}"
+  path_to_output_file = f"{job_configuration['path_to_data']}"
 
   output_blob_client = blob_service_client.get_blob_client(container=output_blob_container_name, blob=path_to_output_file)
 
   output = {
-    "jobId": job_configuration['jobId'],
+    "input_id": job_configuration['input_id'],
+    "instance_id": job_configuration['instance_id'],
     "result": result
   }
 
@@ -23,7 +24,7 @@ def build_output_data(job_configuration, blob_service_client, output_blob_contai
   return path_to_output_file, output_blob_client, output_json
 
 def build_input_data(job_configuration, blob_service_client, input_blob_container_name, log):
-  path_to_input_file = f"{job_configuration['jobId']}/{job_configuration['fileName']}"
+  path_to_input_file = f"{job_configuration['path_to_data']}"
 
   input_blob_client = blob_service_client.get_blob_client(container=input_blob_container_name, blob=path_to_input_file)
 
@@ -58,7 +59,7 @@ def main():
 
         input_json, path_to_input_file, input_blob_client = build_input_data(job_configuration, blob_service_client, input_blob_container_name, log)
         
-        result = algorithm.compute(log, input_json['inputData'])
+        result = algorithm.compute(log, input_json['input_data'])
 
         path_to_output_file, output_blob_client, output_json = build_output_data(job_configuration, blob_service_client, output_blob_container_name, result)
         
