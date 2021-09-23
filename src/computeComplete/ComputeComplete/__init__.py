@@ -21,4 +21,4 @@ def main(event: func.EventGridEvent, starter: str):
 
     logging.info(f"instance_id: {instance_id}")
 
-    client.raise_event(instance_id, 'ComputeComplete')
+    client.raise_event(instance_id=instance_id, event_name='ComputeComplete', task_hub_name='funcorchestrationdurableFuncAciusscdemo', connection_name='Storage')
