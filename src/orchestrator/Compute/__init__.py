@@ -6,11 +6,23 @@
 # - add azure-functions-durable to requirements.txt
 # - run pip install -r requirements.txt
 
-import logging
-import time
+import logging, os, json
+from azure.storage.blob import (
+    BlobServiceClient
+)
 
-def main(input) -> int:
-    time.sleep(5)
-    result = sum(input.input_data)
-    print(f"result: {result}")
-    return result
+def main(input) -> str:
+    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    input_blob_container_name = os.getenv("AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME")
+
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+    path_to_output_file = f"{input.instance_id}/{input.input_id}.json"
+
+    output_blob_client = blob_service_client.get_blob_client(container=input_blob_container_name, blob=path_to_output_file)
+
+    output_json = json.dumps(input, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    output_blob_client.upload_blob(output_json)
+
+    return "Complete"

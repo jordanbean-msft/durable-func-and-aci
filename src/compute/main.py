@@ -4,7 +4,6 @@ from azure.storage.queue import (
 )
 from azure.storage.blob import (
     BlobServiceClient,
-    BlobClient
 )
 import algorithm
 
@@ -23,7 +22,7 @@ def build_output_data(job_configuration, blob_service_client, output_blob_contai
   output_json = json.dumps(output, indent=4)
   return path_to_output_file, output_blob_client, output_json
 
-def parse_input_data(job_configuration, blob_service_client, input_blob_container_name, log):
+def build_input_data(job_configuration, blob_service_client, input_blob_container_name, log):
   path_to_input_file = f"{job_configuration['jobId']}/{job_configuration['fileName']}"
 
   input_blob_client = blob_service_client.get_blob_client(container=input_blob_container_name, blob=path_to_input_file)
@@ -57,7 +56,7 @@ def main():
 
         job_configuration = json.loads(message.content)
 
-        input_json, path_to_input_file, input_blob_client = parse_input_data(job_configuration, blob_service_client, input_blob_container_name, log)
+        input_json, path_to_input_file, input_blob_client = build_input_data(job_configuration, blob_service_client, input_blob_container_name, log)
         
         result = algorithm.compute(log, input_json['inputData'])
 
