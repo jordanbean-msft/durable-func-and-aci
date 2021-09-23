@@ -2,6 +2,8 @@ param longName string
 param storageAccountName string
 param inputQueueName string
 param containerRegistryName string
+param imageName string
+param imageVersion string
 param managedIdentityName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
@@ -18,9 +20,9 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2021-03-
   properties: {
     containers: [
       {
-        name: 'compute'
+        name: imageName
         properties: {
-          image: '${containerRegistry.name}.azurecr.io/compute:latest'
+          image: '${containerRegistry.name}.azurecr.io/${imageName}:${imageVersion}'
           environmentVariables: [
             {
               name: 'AZURE_STORAGE_CONNECTION_STRING'

@@ -5,6 +5,8 @@ param storageAccountName string
 param managedIdentityName string
 param containerRegistryName string
 param inputQueueName string
+param imageName string
+param imageVersion string
 
 var longName = '${appName}-${location}-${environment}'
 
@@ -16,6 +18,8 @@ module containerInstanceDeployment 'aci.bicep' = {
     inputQueueName: inputQueueName
     containerRegistryName: containerRegistryName
     managedIdentityName: managedIdentityName
+    imageName: imageName
+    imageVersion: imageVersion
   }
 }
 
