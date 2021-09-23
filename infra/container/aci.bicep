@@ -32,6 +32,14 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2021-03-
               name: 'AZURE_STORAGE_QUEUE_NAME'
               value: inputQueueName
             }
+            {
+              name: 'AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME'
+              value: 'input'
+            }
+            {
+              name: 'AZURE_STORAGE_OUTPUT_BLOB_CONTAINER_NAME'
+              value: 'output'
+            }
           ]
           resources: {
             requests: {
