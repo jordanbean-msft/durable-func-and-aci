@@ -4,7 +4,7 @@ import logging
 import azure.functions as func
 import azure.durable_functions as df
 
-def main(event: func.EventGridEvent, starter: str):
+async def main(event: func.EventGridEvent, starter: str) -> func.HttpResponse:
     client = df.DurableOrchestrationClient(starter)
     result = json.dumps({
         'id': event.id,
@@ -21,4 +21,4 @@ def main(event: func.EventGridEvent, starter: str):
 
     logging.info(f"instance_id: {instance_id}")
 
-    client.raise_event(instance_id=instance_id, event_name='ComputeComplete', task_hub_name='funcorchestrationdurableFuncAciusscdemo', connection_name='Storage')
+    await client.raise_event(instance_id=instance_id, event_name='ComputeComplete')
