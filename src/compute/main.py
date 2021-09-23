@@ -1,4 +1,4 @@
-import os, logging, json
+import os, logging, json, time
 from azure.storage.queue import (
     QueueClient
 )
@@ -48,32 +48,36 @@ def main():
 
     log.info("Connected to queue service")
     
-    messages = queue_client.receive_messages()
+    while(True):
+        messages = queue_client.receive_messages()
 
-    log.info("Processing messages")
+        log.info("Processing messages")
 
-    for message in messages:
-        log.info("Processing message: " + message.id)
+        for message in messages:
+            log.info("Processing message: " + message.id)
 
-        job_configuration = json.loads(message.content)
+            job_configuration = json.loads(message.content)
 
-        input_json, path_to_input_file, input_blob_client = build_input_data(job_configuration, blob_service_client, input_blob_container_name, log)
-        
-        result = algorithm.compute(log, input_json['input_data'])
+            input_json, path_to_input_file, input_blob_client = build_input_data(job_configuration, blob_service_client, input_blob_container_name, log)
+            
+            result = algorithm.compute(log, input_json['input_data'])
 
-        path_to_output_file, output_blob_client, output_json = build_output_data(job_configuration, blob_service_client, output_blob_container_name, result)
-        
-        log.info("Uploading output blob: " + path_to_output_file)
+            path_to_output_file, output_blob_client, output_json = build_output_data(job_configuration, blob_service_client, output_blob_container_name, result)
+            
+            log.info("Uploading output blob: " + path_to_output_file)
 
-        output_blob_client.upload_blob(output_json)
+            output_blob_client.upload_blob(output_json)
 
-        log.info("Removing message from queue")
+            log.info("Removing message from queue")
 
-        queue_client.delete_message(message.id, message.pop_receipt)
+            queue_client.delete_message(message.id, message.pop_receipt)
 
-        log.info("Deleting blob: " + path_to_input_file)
+            log.info("Deleting blob: " + path_to_input_file)
 
-        input_blob_client.delete_blob()
+            input_blob_client.delete_blob()
+        log.info("Sleeping...")
+
+        time.sleep(5)
 
     log.info("Complete")
 

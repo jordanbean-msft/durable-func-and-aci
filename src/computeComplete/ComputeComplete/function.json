@@ -5,6 +5,11 @@
       "type": "eventGridTrigger",
       "name": "event",
       "direction": "in"
+    },
+    {
+      "name": "starter",
+      "type": "durableClient",
+      "direction": "in"
     }
   ]
 }
