@@ -1,0 +1,203 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "6944511266504957813"
+    }
+  },
+  "parameters": {
+    "longName": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "containerInstanceName": {
+      "type": "string"
+    },
+    "newBlobCreatedEventGridTopicName": {
+      "type": "string"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string"
+    },
+    "storageAccountInputContainerName": {
+      "type": "string"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "aci",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "api": {
+          "id": "[format('/subscriptions/{0}/providers/Microsoft.Web/locations/{1}/managedApis/aci', subscription().subscriptionId, uriComponent(resourceGroup().location))]"
+        },
+        "displayName": "aci",
+        "parameterValues": {}
+      }
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[format('{0}/newBlobCreatedForStartAciLogicAppEventSubscription', parameters('newBlobCreatedEventGridTopicName'))]",
+      "properties": {
+        "destination": {
+          "endpointType": "WebHook",
+          "properties": {
+            "maxEventsPerBatch": 1,
+            "preferredBatchSizeInKilobytes": 64
+          }
+        },
+        "filter": {
+          "includedEventTypes": [
+            "Microsoft.Storage.BlobCreated"
+          ]
+        },
+        "eventDeliverySchema": "EventGridSchema",
+        "retryPolicy": {
+          "maxDeliveryAttempts": 30,
+          "eventTimeToLiveInMinutes": 1440
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "azureeventgrid",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "api": {
+          "id": "[format('/subscriptions/{0}/providers/Microsoft.Web/locations/{1}/managedApis/azureeventgrid', subscription().subscriptionId, uriComponent(resourceGroup().location))]"
+        },
+        "displayName": "azureeventgrid",
+        "parameterValues": {}
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[format('logic-{0}', parameters('longName'))]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "definition": {
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_a_resource_event_occurs": {
+              "splitOn": "@triggerBody()",
+              "type": "ApiConnectionWebhook",
+              "inputs": {
+                "body": {
+                  "properties": {
+                    "destination": {
+                      "endpointType": "webhook",
+                      "properties": {
+                        "endpointUrl": "@{listCallbackUrl()}"
+                      }
+                    },
+                    "filter": {
+                      "includedEventTypes": [
+                        "Microsoft.Storage.BlobCreated"
+                      ],
+                      "subjectBeginsWith": "[format('/blobServices/default/container/{0}', parameters('storageAccountInputContainerName'))]"
+                    },
+                    "topic": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                  }
+                },
+                "host": {
+                  "connection": {
+                    "name": "@parameters(\"$connections\")[\"azureeventgrid\"][\"connectionId\"]"
+                  }
+                },
+                "path": "[format('/subscriptions/{0}/providers/{1}/resource/eventSubscriptions', subscription().subscriptionId, uriComponent('Microsoft.Storage.StorageAccounts'))]",
+                "queries": {
+                  "x-ms-api-version": "2017-09-15-preview"
+                }
+              }
+            }
+          },
+          "actions": {
+            "Start_containers_in_a_container_group": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters(\"$connections\")[\"aci\"][\"connectionId\"]"
+                  }
+                },
+                "method": "post",
+                "path": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ContainerInstance/containerGroups/{2}\"/start', subscription().subscriptionId, uriComponent(resourceGroup().name), uriComponent(parameters('containerInstanceName')))]",
+                "queries": {
+                  "x-ms-api-version": "2019-12-01"
+                }
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "aci": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'aci')]",
+                "connectionName": "aci",
+                "id": "[format('/subscriptions/{0}/providers/Microsoft.Web/locations/{1}/managedApis/aci', subscription().subscriptionId, uriComponent(resourceGroup().name))]"
+              },
+              "azureeventgrid": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'azureeventgrid')]",
+                "connectionName": "azureeventgrid",
+                "id": "[format('/subscriptions/{0}/providers/Microsoft.Web/locations/{1}/managedApis/azureeventgrid', subscription().subscriptionId, uriComponent(resourceGroup().name))]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', 'aci')]",
+        "[resourceId('Microsoft.Web/connections', 'azureeventgrid')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.Logic/workflows/{0}', format('logic-{0}', parameters('longName')))]",
+      "name": "Logging",
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+        "logs": [
+          {
+            "category": "AuditEvent",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/workflows', format('logic-{0}', parameters('longName')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "logicAppName": {
+      "type": "string",
+      "value": "[format('logic-{0}', parameters('longName'))]"
+    }
+  }
+}

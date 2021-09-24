@@ -1,0 +1,156 @@
+{
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('connections_aci_name')]",
+            "location": "southcentralus",
+            "kind": "V1",
+            "properties": {
+                "displayName": "[parameters('connections_aci_name')]",
+                "statuses": [
+                    {
+                        "status": "Error",
+                        "target": "token",
+                        "error": {}
+                    }
+                ],
+                "customParameterValues": {},
+                "nonSecretParameterValues": {
+                    "token:TenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+                    "token:grantType": "code"
+                },
+                "createdTime": "2021-09-23T01:11:22.4723187Z",
+                "changedTime": "2021-09-24T21:50:53.0039542Z",
+                "api": {
+                    "name": "[parameters('connections_aci_name')]",
+                    "displayName": "Azure Container Instance",
+                    "description": "Easily run containers on Azure with a single command. Create container groups, get the logs of a container and more.",
+                    "iconUri": "[concat('https://connectoricons-prod.azureedge.net/releases/v1.0.1479/1.0.1479.2452/', parameters('connections_aci_name'), '/icon.png')]",
+                    "brandColor": "#0089D0",
+                    "id": "[concat('/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/providers/Microsoft.Web/locations/southcentralus/managedApis/', parameters('connections_aci_name'))]",
+                    "type": "Microsoft.Web/locations/managedApis"
+                },
+                "testLinks": []
+            }
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('connections_azureeventgrid_name')]",
+            "location": "southcentralus",
+            "kind": "V1",
+            "properties": {
+                "displayName": "[parameters('connections_azureeventgrid_name')]",
+                "statuses": [
+                    {
+                        "status": "Error",
+                        "target": "token",
+                        "error": {}
+                    }
+                ],
+                "customParameterValues": {},
+                "nonSecretParameterValues": {
+                    "token:TenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+                    "token:grantType": "code"
+                },
+                "createdTime": "2021-09-23T01:10:05.8469994Z",
+                "changedTime": "2021-09-24T21:50:53.0145706Z",
+                "api": {
+                    "name": "[parameters('connections_azureeventgrid_name')]",
+                    "displayName": "Azure Event Grid",
+                    "description": "Azure Event Grid is an eventing backplane that enables event based programing with pub/sub semantics and reliable distribution & delivery for all services in Azure as well as third parties.",
+                    "iconUri": "[concat('https://connectoricons-prod.azureedge.net/releases/v1.0.1515/1.0.1515.2556/', parameters('connections_azureeventgrid_name'), '/icon.png')]",
+                    "brandColor": "#0072c6",
+                    "id": "[concat('/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/providers/Microsoft.Web/locations/southcentralus/managedApis/', parameters('connections_azureeventgrid_name'))]",
+                    "type": "Microsoft.Web/locations/managedApis"
+                },
+                "testLinks": []
+            }
+        },
+{
+  "type": "Microsoft.Logic/workflows",
+  "apiVersion": "2017-07-01",
+  "name": "[parameters('workflows_logic_startAci_ussc_demo_name')]",
+  "location": "southcentralus",
+  "properties": {
+      "state": "Enabled",
+      "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+              "$connections": {
+                  "defaultValue": {},
+                  "type": "Object"
+              }
+          },
+          "triggers": {
+              "When_a_resource_event_occurs": {
+                  "splitOn": "@triggerBody()",
+                  "type": "ApiConnectionWebhook",
+                  "inputs": {
+                      "body": {
+                          "properties": {
+                              "destination": {
+                                  "endpointType": "webhook",
+                                  "properties": {
+                                      "endpointUrl": "@{listCallbackUrl()}"
+                                  }
+                              },
+                              "filter": {
+                                  "includedEventTypes": [
+                                      "Microsoft.Storage.BlobCreated"
+                                  ],
+                                  "subjectBeginsWith": "input"
+                              },
+                              "topic": "[parameters('storageAccounts_sadurablefuncaciusscdemo_externalid')]"
+                          }
+                      },
+                      "host": {
+                          "connection": {
+                              "name": "@parameters('$connections')['azureeventgrid']['connectionId']"
+                          }
+                      },
+                      "path": "/subscriptions/@{encodeURIComponent('dcf66641-6312-4ee1-b296-723bb0a999ba')}/providers/@{encodeURIComponent('Microsoft.Storage.StorageAccounts')}/resource/eventSubscriptions",
+                      "queries": {
+                          "x-ms-api-version": "2017-09-15-preview"
+                      }
+                  }
+              }
+          },
+          "actions": {
+              "Start_containers_in_a_container_group": {
+                  "runAfter": {},
+                  "type": "ApiConnection",
+                  "inputs": {
+                      "host": {
+                          "connection": {
+                              "name": "@parameters('$connections')['aci']['connectionId']"
+                          }
+                      },
+                      "method": "post",
+                      "path": "/subscriptions/@{encodeURIComponent('dcf66641-6312-4ee1-b296-723bb0a999ba')}/resourceGroups/@{encodeURIComponent('rg-durableFuncAci-ussc-demo')}/providers/Microsoft.ContainerInstance/containerGroups/@{encodeURIComponent('aci-durableFuncAci-ussc-demo')}/start",
+                      "queries": {
+                          "x-ms-api-version": "2019-12-01"
+                      }
+                  }
+              }
+          },
+          "outputs": {}
+      },
+      "parameters": {
+          "$connections": {
+              "value": {
+                  "aci": {
+                      "connectionId": "[parameters('connections_aci_externalid')]",
+                      "connectionName": "aci",
+                      "id": "/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/providers/Microsoft.Web/locations/southcentralus/managedApis/aci"
+                  },
+                  "azureeventgrid": {
+                      "connectionId": "[parameters('connections_azureeventgrid_externalid')]",
+                      "connectionName": "azureeventgrid",
+                      "id": "/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/providers/Microsoft.Web/locations/southcentralus/managedApis/azureeventgrid"
+                  }
+              }
+          }
+      }
+  }
+}

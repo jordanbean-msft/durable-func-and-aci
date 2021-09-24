@@ -10,7 +10,6 @@ param outputStorageContainerName string
 @secure()
 param storageAccountConnectionString string
 param numberOfContainersToCreate int
-param logAnalyticsWorkspaceName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
   name: storageAccountName
@@ -84,6 +83,19 @@ resource functionAppKeyVaultGetListSecretAccessPolicy 'Microsoft.KeyVault/vaults
         tenantId: containerInstance.identity.tenantId
       }
     ]
+  }
+}
+
+resource aciConnection 'Microsoft.Web/connections@2016-06-01' = {
+  name: 'aci'
+  location: resourceGroup().location
+  properties: {
+     api: {
+       id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().location)}/managedApis/aci'
+     }
+     displayName: 'aci'
+     parameterValues: {       
+     }
   }
 }
 

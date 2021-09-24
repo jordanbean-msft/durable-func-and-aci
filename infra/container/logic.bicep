@@ -2,23 +2,13 @@ param longName string
 param storageAccountName string
 param containerInstanceName string
 param newBlobCreatedEventGridTopicName string
+param logAnalyticsWorkspaceName string
+param storageAccountInputContainerName string
+param aciConnectionName string
+param eventGridConnectionName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
   name: storageAccountName
-}
-
-resource aciConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'aci'
-  location: resourceGroup().location
-  properties: {
-     api: {
-       id: '/subscriptions/@{encodeURIComponent("${subscription().subscriptionId}")}/providers/Microsoft.Web/locations/@{encodeURIComponent("${resourceGroup().location}")}/managedApis/aci'
-     }
-     displayName: 'aci'
-     parameterValues: {
-       
-     }
-  }
 }
 
 resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-06-01-preview' = {
@@ -35,6 +25,7 @@ resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/event
       includedEventTypes: [
         'Microsoft.Storage.BlobCreated'
       ]
+      subjectBeginsWith: '/blobServices/default/container/${storageAccountInputContainerName}'
     }
     eventDeliverySchema: 'EventGridSchema'
     retryPolicy: {
@@ -44,18 +35,12 @@ resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/event
   }
 }
 
-resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'azureeventgrid'
-  location: resourceGroup().location
-  properties: {
-     api: {
-       id: '/subscriptions/@{encodeURIComponent("${subscription().subscriptionId}")}/providers/Microsoft.Web/locations/@{encodeURIComponent("${resourceGroup().location}")}/managedApis/azureeventgrid'
-     }
-     displayName: 'azureeventgrid'
-     parameterValues: {
-       
-     }
-  }
+resource aciConnection 'Microsoft.Web/connections@2016-06-01' existing = {
+  name: aciConnectionName
+}
+
+resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' existing = {
+  name: eventGridConnectionName
 }
 
 resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
@@ -64,9 +49,10 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
   properties: {    
     definition: {
       parameters: {
-      '$connections': {
-        defaultValue: {}
-        type: 'Object'
+        '$connections': {
+          defaultValue: {}
+          type: 'Object'
+        }
       }
       triggers: {
         'When_a_resource_event_occurs': {
@@ -94,9 +80,9 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
                 name: '@parameters("$connections")["azureeventgrid"]["connectionId"]'
               }
             }
-            path: '/subscriptions/@{encodeURIComponent("${subscription().subscriptionId}")}/providers/@{encodeURIComponent("Microsoft.Storage.StorageAccounts")}/resource/eventSubscriptions'
+            path: '/subscriptions/${subscription().subscriptionId}/providers/${uriComponent('Microsoft.Storage.StorageAccounts')}/resource/eventSubscriptions'
             queries: {
-              'x-ms-api-version': '2017-06-15-preview'
+              'x-ms-api-version': '2017-09-15-preview'
             }
           }
         }
@@ -112,7 +98,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
               }
             }
             method: 'post'
-            path: '/subscriptions/@{encodeURIComponent("${subscription().subscriptionId}")}/resourceGroups/@{encodeURIComponent("${resourceGroup().name}")}/providers/Microsoft.ContainerInstance/containerGroups/@{encodeURIComponent("${containerInstanceName}")}/start'
+            path: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${uriComponent(resourceGroup().name)}/providers/Microsoft.ContainerInstance/containerGroups/${uriComponent(containerInstanceName)}"/start'
             queries: {
               'x-ms-api-version': '2019-12-01'
             }
@@ -121,22 +107,47 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       }
       outputs: {}
     }
-    }
     parameters: {
      '$connections': {
        value: {
          aci: {
            connectionId: aciConnection.id
            connectionName: 'aci'
-           id: '/subscriptions/@{encodeURIComponent("${subscription().subscriptionId}")}/providers/Microsoft.Web/locations/@{encodeURIComponent("${resourceGroup().location}")}/managedApis/aci'
+           id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().name)}/managedApis/aci'
          }
          azureeventgrid: {
            connectionId: eventGridConnection.id
            connectionName: 'azureeventgrid'
-           id: '/subscriptions/@{encodeURIComponent("${subscription().subscriptionId}")}/providers/Microsoft.Web/locations/@{encodeURIComponent("${resourceGroup().location}")}/managedApis/azureeventgrid'
+           id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().name)}/managedApis/azureeventgrid'
          }
        }
      } 
     }
   }
 }
+
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' existing = {
+  name: logAnalyticsWorkspaceName
+}
+
+resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'Logging'
+  scope: logicApp
+  properties: {
+    workspaceId: logAnalyticsWorkspace.id
+    logs: [
+      {
+        category: 'AuditEvent'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
+  }
+}
+
+output logicAppName string = logicApp.name

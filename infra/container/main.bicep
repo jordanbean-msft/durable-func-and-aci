@@ -12,6 +12,10 @@ param numberOfContainersToCreate int
 param keyVaultName string
 param storageAccountConnectionStringSecretName string
 param logAnalyticsWorkspaceName string
+param newBlobCreatedEventGridTopicName string
+param storageAccountInputContainerName string
+param aciConnectionName string
+param eventGridConnectionName string
 
 var longName = '${appName}-${location}-${environment}'
 
@@ -33,7 +37,20 @@ module containerInstanceDeployment 'aci.bicep' = {
     storageAccountConnectionString: keyVault.getSecret(storageAccountConnectionStringSecretName)
     imageName: imageName
     imageVersion: imageVersion
+  }
+}
+
+module logicAppDeployment 'logic.bicep' = {
+  name: 'logicAppDeployment'
+  params: {
+    containerInstanceName: containerInstanceDeployment.outputs.containerInstanceName
+    longName: longName
+    newBlobCreatedEventGridTopicName: newBlobCreatedEventGridTopicName
+    storageAccountName: storageAccountName
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
+    storageAccountInputContainerName: storageAccountInputContainerName
+    aciConnectionName: aciConnectionName
+    eventGridConnectionName: eventGridConnectionName
   }
 }
 

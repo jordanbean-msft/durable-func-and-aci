@@ -134,6 +134,19 @@ resource blobCreatedEventGridTopic 'Microsoft.EventGrid/systemTopics@2021-06-01-
   } 
 }
 
+resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
+  name: 'azureeventgrid'
+  location: resourceGroup().location
+  properties: {
+     api: {
+       name: 'azureeventgrid'
+       id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().location)}/managedApis/azureeventgrid'
+       type: 'Microsoft.Web/locations/managedApis'
+     }
+     displayName: 'azureeventgrid'
+  }
+}
+
 var storageAccountConnectionStringSecretName = 'storageAccountConnectionString'
 
 resource storageAccountConnectionString 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
