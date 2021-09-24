@@ -59,7 +59,8 @@ def main():
             job_configuration = json.loads(message.content)
 
             input_json, path_to_input_file, input_blob_client = build_input_data(job_configuration, blob_service_client, input_blob_container_name, log)
-            
+
+            # your algorithm goes here 
             result = algorithm.compute(log, input_json['input_data'])
 
             path_to_output_file, output_blob_client, output_json = build_output_data(job_configuration, blob_service_client, output_blob_container_name, result)

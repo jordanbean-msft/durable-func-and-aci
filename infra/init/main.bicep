@@ -3,11 +3,21 @@ param location string
 param environment string
 
 var longName = '${appName}-${location}-${environment}'
+var orchtestrationFunctionAppName = 'func-orchestration-${longName}'
 
-module managedIdentityDeployment 'identity.bicep' = {
-  name: 'managedIdentityDeployment'
+module loggingDeployment 'logging.bicep' = {
+  name: 'loggingDeployment'
   params: {
     longName: longName
+    orchtestrationFunctionAppName: orchtestrationFunctionAppName
+  }
+}
+
+module keyVaultDeployment 'keyVault.bicep' = {
+  name: 'keyVaultDeployment'
+  params: {
+    longName: longName
+    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
   }
 }
 
@@ -15,14 +25,17 @@ module storageDeployment 'storage.bicep' = {
   name: 'storageDeployment'
   params: {
     longName: longName
-    managedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
+    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
+    keyVaultName: keyVaultDeployment.outputs.keyVaultName
   }
 }
+
 
 module containerRegistryDeployment 'acr.bicep' = {
   name: 'containerRegistryDeployment'
   params: {
     longName: longName
+    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
   }
 }
 
@@ -30,8 +43,12 @@ module functionDeployment 'func.bicep' = {
   name: 'functionDeployment'
   params: {
     longName: longName
-    storageAccountName: storageDeployment.outputs.storageAccountName
-    managedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
+    keyVaultName: keyVaultDeployment.outputs.keyVaultName
+    storageAccountInputContainerName: storageDeployment.outputs.inputContainerName
+    storageAccountConnectionStringSecretName: storageDeployment.outputs.storageAccountConnectionStringSecretName
+    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
+    orchtestrationFunctionAppName: orchtestrationFunctionAppName
+    appInsightsName: loggingDeployment.outputs.appInsightsName
   }
 }
 
@@ -40,4 +57,3 @@ output storageAccountInputContainerName string = storageDeployment.outputs.input
 output storageAccountInputQueueName string = storageDeployment.outputs.inputQueueName
 output storageAccountOutputContainerName string = storageDeployment.outputs.outputContainerName
 output containerRegistryName string = containerRegistryDeployment.outputs.containerRegistryName
-output managedIdentityName string = managedIdentityDeployment.outputs.managedIdentityName

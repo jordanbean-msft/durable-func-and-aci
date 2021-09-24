@@ -1,6 +1,10 @@
 param longName string
-param storageAccountName string
-param managedIdentityName string
+param keyVaultName string
+param storageAccountConnectionStringSecretName string
+param storageAccountInputContainerName string
+param logAnalyticsWorkspaceName string
+param appInsightsName string
+param orchtestrationFunctionAppName string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: 'asp-${longName}'
@@ -15,46 +19,42 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   }
 }
 
-var orchestratorFunctionName = 'func-orchestration-${longName}'
-var computeCompleteFunctionName = 'func-computeComplete-${longName}'
-
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
-  name: managedIdentityName
+resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
+  name: appInsightsName
 }
 
 resource orchestratorFunction 'Microsoft.Web/sites@2021-01-15' = {
-  name: orchestratorFunctionName
+  name: orchtestrationFunctionAppName
   location: resourceGroup().location
   kind: 'functionapp'
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${managedIdentity.id}': {}
-    }
+    type: 'SystemAssigned'
   }
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
+      linuxFxVersion: 'PYTHON|3.8'
+      pythonVersion: '3.8'
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(resourceId('Microsoft.Storage/storageAccounts', storageAccountName), '2019-06-01').keys[0].value}'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${storageAccountConnectionStringSecretName})'
         }
         {
           name: 'AZURE_STORAGE_CONNECTION_STRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(resourceId('Microsoft.Storage/storageAccounts', storageAccountName), '2019-06-01').keys[0].value}'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${storageAccountConnectionStringSecretName})'
+        }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: appInsights.properties.InstrumentationKey
         }
         {
           name: 'AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME'
-          value: 'input'
+          value: storageAccountInputContainerName
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~3'
-        }
-        {
-          name: 'linuxFxVersion'
-          value: 'python|3.8'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -62,5 +62,47 @@ resource orchestratorFunction 'Microsoft.Web/sites@2021-01-15' = {
         }
       ]
     }
+  }
+}
+
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' existing = {
+  name: logAnalyticsWorkspaceName
+}
+
+resource functionAppDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'Logging'
+  scope: orchestratorFunction
+  properties: {
+    workspaceId: logAnalyticsWorkspace.id
+    logs: [
+      {
+        category: 'FunctionAppLogs'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
+  }
+}
+
+resource functionAppKeyVaultGetListSecretAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2021-06-01-preview' = {
+  name: '${keyVaultName}/add'
+  properties: {
+    accessPolicies: [
+      {
+        objectId: orchestratorFunction.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+          ]
+        }
+        tenantId: orchestratorFunction.identity.tenantId
+      }
+    ]
   }
 }
