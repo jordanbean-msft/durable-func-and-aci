@@ -45,10 +45,12 @@ module functionDeployment 'func.bicep' = {
     longName: longName
     keyVaultName: keyVaultDeployment.outputs.keyVaultName
     storageAccountInputContainerName: storageDeployment.outputs.inputContainerName
+    storageAccountOutputContainerName: storageDeployment.outputs.outputContainerName
     storageAccountConnectionStringSecretName: storageDeployment.outputs.storageAccountConnectionStringSecretName
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
     orchtestrationFunctionAppName: orchtestrationFunctionAppName
     appInsightsName: loggingDeployment.outputs.appInsightsName
+    newBlobCreatedEventGridTopicName: storageDeployment.outputs.newBlobCreatedEventGridTopicName
   }
 }
 

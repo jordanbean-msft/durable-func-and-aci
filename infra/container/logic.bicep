@@ -22,7 +22,7 @@ resource aciConnection 'Microsoft.Web/connections@2016-06-01' = {
 }
 
 resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-06-01-preview' = {
-  name: '${newBlobCreatedEventGridTopicName}/newBlobCreatedEventSubscription'
+  name: '${newBlobCreatedEventGridTopicName}/newBlobCreatedForStartAciLogicAppEventSubscription'
   properties: {
     destination: {
       endpointType: 'WebHook'

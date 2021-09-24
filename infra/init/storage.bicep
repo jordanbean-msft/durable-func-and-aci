@@ -134,9 +134,10 @@ resource blobCreatedEventGridTopic 'Microsoft.EventGrid/systemTopics@2021-06-01-
   } 
 }
 
+var storageAccountConnectionStringSecretName = 'storageAccountConnectionString'
 
 resource storageAccountConnectionString 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
-  name: '${keyVaultName}/storageAccountConnectionString'
+  name: '${keyVaultName}/${storageAccountConnectionStringSecretName}'
   properties: {
     value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(resourceId('Microsoft.Storage/storageAccounts', storageAccount.name), '2019-06-01').keys[0].value}'
   }
@@ -147,4 +148,4 @@ output inputContainerName string = inputContainer.name
 output outputContainerName string = outputContainer.name
 output inputQueueName string = inputQueue.name
 output newBlobCreatedEventGridTopicName string = blobCreatedEventGridTopic.name
-output storageAccountConnectionStringSecretName string = storageAccountConnectionString.name
+output storageAccountConnectionStringSecretName string = storageAccountConnectionStringSecretName

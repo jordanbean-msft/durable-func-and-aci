@@ -2,9 +2,11 @@ param longName string
 param keyVaultName string
 param storageAccountConnectionStringSecretName string
 param storageAccountInputContainerName string
+param storageAccountOutputContainerName string
 param logAnalyticsWorkspaceName string
 param appInsightsName string
 param orchtestrationFunctionAppName string
+param newBlobCreatedEventGridTopicName string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: 'asp-${longName}'
@@ -104,5 +106,30 @@ resource functionAppKeyVaultGetListSecretAccessPolicy 'Microsoft.KeyVault/vaults
         tenantId: orchestratorFunction.identity.tenantId
       }
     ]
+  }
+}
+
+resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-06-01-preview' = {
+  name: '${newBlobCreatedEventGridTopicName}/newBlobCreatedForRaiseEventFunctionAppEventSubscription'
+  properties: {
+    destination: {
+      endpointType: 'AzureFunction'
+      properties: {
+        resourceId: '${orchestratorFunction.id}/functions/ComputeComplete'
+        maxEventsPerBatch: 1
+        preferredBatchSizeInKilobytes: 64
+      }
+    }
+    filter: {
+      subjectBeginsWith: '/blobServices/default/container/${storageAccountOutputContainerName}'
+      includedEventTypes: [
+        'Microsoft.Storage.BlobCreated'
+      ]
+    }
+    eventDeliverySchema: 'EventGridSchema'
+    retryPolicy: {
+      maxDeliveryAttempts: 30
+      eventTimeToLiveInMinutes: 1440
+    }
   }
 }
