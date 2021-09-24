@@ -1,0 +1,256 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "5072433025303534294"
+    }
+  },
+  "parameters": {
+    "appName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "containerRegistryName": {
+      "type": "string"
+    },
+    "inputQueueName": {
+      "type": "string"
+    },
+    "imageName": {
+      "type": "string"
+    },
+    "imageVersion": {
+      "type": "string"
+    },
+    "inputStorageContainerName": {
+      "type": "string"
+    },
+    "outputStorageContainerName": {
+      "type": "string"
+    },
+    "numberOfContainersToCreate": {
+      "type": "int"
+    },
+    "keyVaultName": {
+      "type": "string"
+    },
+    "storageAccountConnectionStringSecretName": {
+      "type": "string"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string"
+    }
+  },
+  "functions": [],
+  "variables": {
+    "longName": "[format('{0}-{1}-{2}', parameters('appName'), parameters('location'), parameters('environment'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "containerInstanceDeployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "longName": {
+            "value": "[variables('longName')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "inputQueueName": {
+            "value": "[parameters('inputQueueName')]"
+          },
+          "containerRegistryName": {
+            "value": "[parameters('containerRegistryName')]"
+          },
+          "inputStorageContainerName": {
+            "value": "[parameters('inputStorageContainerName')]"
+          },
+          "outputStorageContainerName": {
+            "value": "[parameters('outputStorageContainerName')]"
+          },
+          "numberOfContainersToCreate": {
+            "value": "[parameters('numberOfContainersToCreate')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "storageAccountConnectionStringSecretName": {
+            "value": "[parameters('storageAccountConnectionStringSecretName')]"
+          },
+          "imageName": {
+            "value": "[parameters('imageName')]"
+          },
+          "imageVersion": {
+            "value": "[parameters('imageVersion')]"
+          },
+          "logAnalyticsWorkspaceName": {
+            "value": "[parameters('logAnalyticsWorkspaceName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "14761640187678211254"
+            }
+          },
+          "parameters": {
+            "longName": {
+              "type": "string"
+            },
+            "storageAccountName": {
+              "type": "string"
+            },
+            "inputQueueName": {
+              "type": "string"
+            },
+            "containerRegistryName": {
+              "type": "string"
+            },
+            "imageName": {
+              "type": "string"
+            },
+            "imageVersion": {
+              "type": "string"
+            },
+            "keyVaultName": {
+              "type": "string"
+            },
+            "inputStorageContainerName": {
+              "type": "string"
+            },
+            "outputStorageContainerName": {
+              "type": "string"
+            },
+            "storageAccountConnectionStringSecretName": {
+              "type": "string"
+            },
+            "numberOfContainersToCreate": {
+              "type": "int"
+            },
+            "logAnalyticsWorkspaceName": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.ContainerInstance/containerGroups",
+              "apiVersion": "2021-03-01",
+              "name": "[format('aci-{0}', parameters('longName'))]",
+              "location": "[resourceGroup().location]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "copy": [
+                  {
+                    "name": "containers",
+                    "count": "[length(range(0, parameters('numberOfContainersToCreate')))]",
+                    "input": {
+                      "name": "[format('{0}{1}', parameters('imageName'), range(0, parameters('numberOfContainersToCreate'))[copyIndex('containers')])]",
+                      "properties": {
+                        "image": "[format('{0}.azurecr.io/{1}:{2}', parameters('containerRegistryName'), parameters('imageName'), parameters('imageVersion'))]",
+                        "environmentVariables": [
+                          {
+                            "name": "AZURE_STORAGE_CONNECTION_STRING",
+                            "secureValue": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2021-04-01').keys[0].value)]"
+                          },
+                          {
+                            "name": "AZURE_TMP",
+                            "secureValue": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', split(parameters('storageAccountConnectionStringSecretName'), '/')[0], split(parameters('storageAccountConnectionStringSecretName'), '/')[1]), '2021-06-01-preview').value]"
+                          },
+                          {
+                            "name": "AZURE_STORAGE_QUEUE_NAME",
+                            "value": "[parameters('inputQueueName')]"
+                          },
+                          {
+                            "name": "AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME",
+                            "value": "[parameters('inputStorageContainerName')]"
+                          },
+                          {
+                            "name": "AZURE_STORAGE_OUTPUT_BLOB_CONTAINER_NAME",
+                            "value": "[parameters('outputStorageContainerName')]"
+                          }
+                        ],
+                        "resources": {
+                          "requests": {
+                            "cpu": 1,
+                            "memoryInGB": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "osType": "Linux",
+                "restartPolicy": "Never",
+                "imageRegistryCredentials": [
+                  {
+                    "server": "[format('{0}.azurecr.io', parameters('containerRegistryName'))]",
+                    "username": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName')), '2021-06-01-preview').username]",
+                    "password": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName')), '2021-06-01-preview').passwords[0].value]"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
+              "apiVersion": "2021-06-01-preview",
+              "name": "[format('{0}/add', parameters('keyVaultName'))]",
+              "properties": {
+                "accessPolicies": [
+                  {
+                    "objectId": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', format('aci-{0}', parameters('longName'))), '2021-03-01', 'full').identity.principalId]",
+                    "permissions": {
+                      "secrets": [
+                        "get",
+                        "list"
+                      ]
+                    },
+                    "tenantId": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', format('aci-{0}', parameters('longName'))), '2021-03-01', 'full').identity.tenantId]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerInstance/containerGroups', format('aci-{0}', parameters('longName')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "containerInstanceName": {
+              "type": "string",
+              "value": "[format('aci-{0}', parameters('longName'))]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "containerInstanceName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'containerInstanceDeployment'), '2019-10-01').outputs.containerInstanceName.value]"
+    }
+  }
+}

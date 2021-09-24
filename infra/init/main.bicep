@@ -1,6 +1,7 @@
 param appName string
 param location string
 param environment string
+param adminObjectId string
 
 var longName = '${appName}-${location}-${environment}'
 var orchtestrationFunctionAppName = 'func-orchestration-${longName}'
@@ -18,6 +19,7 @@ module keyVaultDeployment 'keyVault.bicep' = {
   params: {
     longName: longName
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
+    adminObjectId: adminObjectId
   }
 }
 
@@ -29,7 +31,6 @@ module storageDeployment 'storage.bicep' = {
     keyVaultName: keyVaultDeployment.outputs.keyVaultName
   }
 }
-
 
 module containerRegistryDeployment 'acr.bicep' = {
   name: 'containerRegistryDeployment'
@@ -59,3 +60,9 @@ output storageAccountInputContainerName string = storageDeployment.outputs.input
 output storageAccountInputQueueName string = storageDeployment.outputs.inputQueueName
 output storageAccountOutputContainerName string = storageDeployment.outputs.outputContainerName
 output containerRegistryName string = containerRegistryDeployment.outputs.containerRegistryName
+output keyVaultName string = keyVaultDeployment.outputs.keyVaultName
+output logAnalyticsWorkspaceName string = loggingDeployment.outputs.logAnalyticsWorkspaceName
+output appInsightsName string = loggingDeployment.outputs.appInsightsName
+output newBlobCreatedEventGridTopicName string = storageDeployment.outputs.newBlobCreatedEventGridTopicName
+output orchestratorFunctionAppName string = orchtestrationFunctionAppName
+output storageAccountConnectionStringSecretName string = storageDeployment.outputs.storageAccountConnectionStringSecretName

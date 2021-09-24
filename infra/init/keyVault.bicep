@@ -1,5 +1,6 @@
 param longName string
 param logAnalyticsWorkspaceName string
+param adminObjectId string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   name: replace('kv${longName}', '-', '')
@@ -11,8 +12,18 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     }
     tenantId: subscription().tenantId
     accessPolicies: [
-      
+      {
+        objectId: adminObjectId
+        permissions: {
+          secrets: [
+            'all'
+          ]
+        }
+        tenantId: subscription().tenantId
+      }
     ]
+    enabledForDeployment: true
+    enabledForTemplateDeployment: true
   }
 }
 
