@@ -52,6 +52,7 @@ module functionDeployment 'func.bicep' = {
     orchtestrationFunctionAppName: orchtestrationFunctionAppName
     appInsightsName: loggingDeployment.outputs.appInsightsName
     newBlobCreatedEventGridTopicName: storageDeployment.outputs.newBlobCreatedEventGridTopicName
+    storageAccountQueueName: storageDeployment.outputs.inputQueueName
   }
 }
 

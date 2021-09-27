@@ -110,7 +110,7 @@
                       "includedEventTypes": [
                         "Microsoft.Storage.BlobCreated"
                       ],
-                      "subjectBeginsWith": "[format('/blobServices/default/container/{0}', parameters('storageAccountInputContainerName'))]"
+                      "subjectBeginsWith": "[format('/blobServices/default/containers/{0}', parameters('storageAccountInputContainerName'))]"
                     },
                     "topic": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
                   }

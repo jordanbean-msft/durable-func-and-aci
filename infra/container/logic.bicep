@@ -26,7 +26,7 @@ resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/event
       includedEventTypes: [
         'Microsoft.Storage.BlobCreated'
       ]
-      subjectBeginsWith: '/blobServices/default/container/${storageAccountInputContainerName}'
+      subjectBeginsWith: '/blobServices/default/containers/${storageAccountInputContainerName}'
     }
     eventDeliverySchema: 'EventGridSchema'
     retryPolicy: {

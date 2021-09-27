@@ -3,6 +3,7 @@ param keyVaultName string
 param storageAccountConnectionStringSecretName string
 param storageAccountInputContainerName string
 param storageAccountOutputContainerName string
+param storageAccountQueueName string
 param logAnalyticsWorkspaceName string
 param appInsightsName string
 param orchtestrationFunctionAppName string
@@ -53,6 +54,10 @@ resource orchestratorFunction 'Microsoft.Web/sites@2021-01-15' = {
         {
           name: 'AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME'
           value: storageAccountInputContainerName
+        }
+        {
+          name: 'AZURE_STORAGE_QUEUE_NAME'
+          value: storageAccountQueueName
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -121,7 +126,7 @@ resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/event
       }
     }
     filter: {
-      subjectBeginsWith: '/blobServices/default/container/${storageAccountOutputContainerName}'
+      subjectBeginsWith: '/blobServices/default/containers/${storageAccountOutputContainerName}'
       includedEventTypes: [
         'Microsoft.Storage.BlobCreated'
       ]
