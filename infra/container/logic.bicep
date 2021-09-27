@@ -19,6 +19,7 @@ resource newBlobCreatedEventSubscription 'Microsoft.EventGrid/systemTopics/event
       properties: {
         maxEventsPerBatch: 1
         preferredBatchSizeInKilobytes: 64
+        endpointUrl: listCallbackUrl(resourceId('Microsoft.Logic/workflows/triggers', logicApp.name, logicAppTriggerName), '2019-05-01').value
       }
     }
     filter: {
@@ -43,11 +44,14 @@ resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' existing = {
   name: eventGridConnectionName
 }
 
+var logicAppTriggerName = 'When_a_resource_event_occurs'
+
 resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
   name: 'logic-${longName}'
   location: resourceGroup().location
   properties: {    
     definition: {
+      '$schema': 'https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#'
       parameters: {
         '$connections': {
           defaultValue: {}
@@ -55,7 +59,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
         }
       }
       triggers: {
-        'When_a_resource_event_occurs': {
+        '${logicAppTriggerName}': {
           splitOn: '@triggerBody()'
           type: 'ApiConnectionWebhook'
           inputs: {
@@ -77,7 +81,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
             }
             host: {
               connection: {
-                name: '@parameters("$connections")["azureeventgrid"]["connectionId"]'
+                name: '@parameters(\'$connections\')[\'azureeventgrid\'][\'connectionId\']'
               }
             }
             path: '/subscriptions/${subscription().subscriptionId}/providers/${uriComponent('Microsoft.Storage.StorageAccounts')}/resource/eventSubscriptions'
@@ -94,7 +98,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
           inputs: {
             host: {
               connection: {
-                name: '@parameters("$connections")["aci"]["connectionId"]'
+                name: '@parameters(\'$connections\')[\'aci\'][\'connectionId\']'
               }
             }
             method: 'post'
@@ -113,12 +117,12 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
          aci: {
            connectionId: aciConnection.id
            connectionName: 'aci'
-           id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().name)}/managedApis/aci'
+           id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().location)}/managedApis/aci'
          }
          azureeventgrid: {
            connectionId: eventGridConnection.id
            connectionName: 'azureeventgrid'
-           id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().name)}/managedApis/azureeventgrid'
+           id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${uriComponent(resourceGroup().location)}/managedApis/azureeventgrid'
          }
        }
      } 
@@ -137,7 +141,7 @@ resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-pr
     workspaceId: logAnalyticsWorkspace.id
     logs: [
       {
-        category: 'AuditEvent'
+        category: 'WorkflowRuntime'
         enabled: true
       }
     ]
