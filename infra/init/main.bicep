@@ -4,7 +4,7 @@ param environment string
 param adminObjectId string
 
 var longName = '${appName}-${location}-${environment}'
-var orchtestrationFunctionAppName = 'func-orchestration-${longName}'
+var orchtestrationFunctionAppName = 'func-${longName}'
 
 module loggingDeployment 'logging.bicep' = {
   name: 'loggingDeployment'
@@ -46,12 +46,10 @@ module functionDeployment 'func.bicep' = {
     longName: longName
     keyVaultName: keyVaultDeployment.outputs.keyVaultName
     storageAccountInputContainerName: storageDeployment.outputs.inputContainerName
-    storageAccountOutputContainerName: storageDeployment.outputs.outputContainerName
     storageAccountConnectionStringSecretName: storageDeployment.outputs.storageAccountConnectionStringSecretName
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
     orchtestrationFunctionAppName: orchtestrationFunctionAppName
     appInsightsName: loggingDeployment.outputs.appInsightsName
-    newBlobCreatedEventGridTopicName: storageDeployment.outputs.newBlobCreatedEventGridTopicName
     storageAccountQueueName: storageDeployment.outputs.inputQueueName
   }
 }
@@ -65,5 +63,5 @@ output keyVaultName string = keyVaultDeployment.outputs.keyVaultName
 output logAnalyticsWorkspaceName string = loggingDeployment.outputs.logAnalyticsWorkspaceName
 output appInsightsName string = loggingDeployment.outputs.appInsightsName
 output newBlobCreatedEventGridTopicName string = storageDeployment.outputs.newBlobCreatedEventGridTopicName
-output orchestratorFunctionAppName string = orchtestrationFunctionAppName
+output orchtestrationFunctionAppName string = orchtestrationFunctionAppName
 output storageAccountConnectionStringSecretName string = storageDeployment.outputs.storageAccountConnectionStringSecretName

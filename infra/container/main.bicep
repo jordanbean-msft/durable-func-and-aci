@@ -16,11 +16,22 @@ param newBlobCreatedEventGridTopicName string
 param storageAccountInputContainerName string
 param aciConnectionName string
 param eventGridConnectionName string
+param orchtestrationFunctionAppName string
+param storageAccountOutputContainerName string
 
 var longName = '${appName}-${location}-${environment}'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existing = {
   name: keyVaultName
+}
+
+module eventSubscriptionDeployment 'eventSubscription.bicep' = {
+  name: 'eventSubscriptionDeployment'
+  params: {
+    orchtestrationFunctionAppName: orchtestrationFunctionAppName
+    storageAccountOutputContainerName: storageAccountOutputContainerName
+    newBlobCreatedEventGridTopicName: newBlobCreatedEventGridTopicName
+  }
 }
 
 module containerInstanceDeployment 'aci.bicep' = {
