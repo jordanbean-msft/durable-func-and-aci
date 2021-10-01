@@ -1,15 +1,13 @@
-param longName string
-param storageAccountName string
-param inputQueueName string
 param containerRegistryName string
 param imageName string
 param imageVersion string
-param keyVaultName string
+param inputQueueName string
 param inputStorageContainerName string
-param outputStorageContainerName string
-@secure()
-param storageAccountConnectionString string
+param longName string
+param maxDurationInMinutes int
 param numberOfContainersToCreate int
+param outputStorageContainerName string
+param storageAccountName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
   name: storageAccountName
@@ -33,7 +31,7 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2021-03-
           environmentVariables: [
             {
               name: 'AZURE_STORAGE_CONNECTION_STRING'
-              secureValue: storageAccountConnectionString
+              secureValue: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(resourceId('Microsoft.Storage/storageAccounts', storageAccount.name), '2019-06-01').keys[0].value}'
             }
             {
               name: 'AZURE_STORAGE_QUEUE_NAME'
@@ -46,6 +44,10 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2021-03-
             {
               name: 'AZURE_STORAGE_OUTPUT_BLOB_CONTAINER_NAME'
               value: outputStorageContainerName
+            }
+            {
+              name: 'MAX_DURATION_IN_MINUTES'
+              value: maxDurationInMinutes
             }
           ]
           resources: {
@@ -63,24 +65,6 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2021-03-
         server: '${containerRegistry.name}.azurecr.io'
         username: listCredentials(containerRegistry.id, containerRegistry.apiVersion).username
         password: listCredentials(containerRegistry.id, containerRegistry.apiVersion).passwords[0].value
-      }
-    ]
-  }
-}
-
-resource functionAppKeyVaultGetListSecretAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2021-06-01-preview' = {
-  name: '${keyVaultName}/add'
-  properties: {
-    accessPolicies: [
-      {
-        objectId: containerInstance.identity.principalId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-          ]
-        }
-        tenantId: containerInstance.identity.tenantId
       }
     ]
   }

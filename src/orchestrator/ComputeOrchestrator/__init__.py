@@ -6,9 +6,7 @@
 # - add azure-functions-durable to requirements.txt
 # - run pip install -r requirements.txt
 
-import logging
 import json
-import time
 
 import azure.functions as func
 import azure.durable_functions as df

@@ -1,11 +1,11 @@
-param longName string
-param storageAccountName string
-param containerInstanceName string
-param newBlobCreatedEventGridTopicName string
-param logAnalyticsWorkspaceName string
-param storageAccountInputContainerName string
 param aciConnectionName string
+param containerInstanceName string
 param eventGridConnectionName string
+param logAnalyticsWorkspaceName string
+param longName string
+param newBlobCreatedEventGridTopicName string
+param storageAccountInputContainerName string
+param storageAccountName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
   name: storageAccountName
@@ -102,7 +102,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
               }
             }
             method: 'post'
-            path: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${uriComponent(resourceGroup().name)}/providers/Microsoft.ContainerInstance/containerGroups/${uriComponent(containerInstanceName)}"/start'
+            path: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${uriComponent(resourceGroup().name)}/providers/Microsoft.ContainerInstance/containerGroups/${uriComponent(containerInstanceName)}/start'
             queries: {
               'x-ms-api-version': '2019-12-01'
             }

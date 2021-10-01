@@ -1,7 +1,6 @@
 param appName string
-param location string
 param environment string
-param adminObjectId string
+param location string
 
 var longName = '${appName}-${location}-${environment}'
 var orchtestrationFunctionAppName = 'func-${longName}'
@@ -14,21 +13,11 @@ module loggingDeployment 'logging.bicep' = {
   }
 }
 
-module keyVaultDeployment 'keyVault.bicep' = {
-  name: 'keyVaultDeployment'
-  params: {
-    longName: longName
-    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
-    adminObjectId: adminObjectId
-  }
-}
-
 module storageDeployment 'storage.bicep' = {
   name: 'storageDeployment'
   params: {
     longName: longName
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
-    keyVaultName: keyVaultDeployment.outputs.keyVaultName
   }
 }
 
@@ -44,13 +33,12 @@ module functionDeployment 'func.bicep' = {
   name: 'functionDeployment'
   params: {
     longName: longName
-    keyVaultName: keyVaultDeployment.outputs.keyVaultName
     storageAccountInputContainerName: storageDeployment.outputs.inputContainerName
-    storageAccountConnectionStringSecretName: storageDeployment.outputs.storageAccountConnectionStringSecretName
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
     orchtestrationFunctionAppName: orchtestrationFunctionAppName
     appInsightsName: loggingDeployment.outputs.appInsightsName
     storageAccountQueueName: storageDeployment.outputs.inputQueueName
+    storageAccountName: storageDeployment.outputs.storageAccountName
   }
 }
 
@@ -59,9 +47,7 @@ output storageAccountInputContainerName string = storageDeployment.outputs.input
 output storageAccountInputQueueName string = storageDeployment.outputs.inputQueueName
 output storageAccountOutputContainerName string = storageDeployment.outputs.outputContainerName
 output containerRegistryName string = containerRegistryDeployment.outputs.containerRegistryName
-output keyVaultName string = keyVaultDeployment.outputs.keyVaultName
 output logAnalyticsWorkspaceName string = loggingDeployment.outputs.logAnalyticsWorkspaceName
 output appInsightsName string = loggingDeployment.outputs.appInsightsName
 output newBlobCreatedEventGridTopicName string = storageDeployment.outputs.newBlobCreatedEventGridTopicName
 output orchtestrationFunctionAppName string = orchtestrationFunctionAppName
-output storageAccountConnectionStringSecretName string = storageDeployment.outputs.storageAccountConnectionStringSecretName

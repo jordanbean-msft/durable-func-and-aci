@@ -1,29 +1,24 @@
+param aciConnectionName string
 param appName string
-param location string
-param environment string
-param storageAccountName string
 param containerRegistryName string
-param inputQueueName string
+param environment string
+param eventGridConnectionName string
 param imageName string
 param imageVersion string
+param inputQueueName string
 param inputStorageContainerName string
-param outputStorageContainerName string
-param numberOfContainersToCreate int
-param keyVaultName string
-param storageAccountConnectionStringSecretName string
+param location string
 param logAnalyticsWorkspaceName string
+param maxDurationInMinutes int
 param newBlobCreatedEventGridTopicName string
-param storageAccountInputContainerName string
-param aciConnectionName string
-param eventGridConnectionName string
+param numberOfContainersToCreate int
 param orchtestrationFunctionAppName string
+param outputStorageContainerName string
+param storageAccountInputContainerName string
+param storageAccountName string
 param storageAccountOutputContainerName string
 
 var longName = '${appName}-${location}-${environment}'
-
-resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existing = {
-  name: keyVaultName
-}
 
 module eventSubscriptionDeployment 'eventSubscription.bicep' = {
   name: 'eventSubscriptionDeployment'
@@ -44,10 +39,9 @@ module containerInstanceDeployment 'aci.bicep' = {
     inputStorageContainerName: inputStorageContainerName
     outputStorageContainerName: outputStorageContainerName
     numberOfContainersToCreate: numberOfContainersToCreate
-    keyVaultName: keyVaultName
-    storageAccountConnectionString: keyVault.getSecret(storageAccountConnectionStringSecretName)
     imageName: imageName
     imageVersion: imageVersion
+    maxDurationInMinutes: maxDurationInMinutes
   }
 }
 

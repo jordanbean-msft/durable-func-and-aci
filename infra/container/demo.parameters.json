@@ -10,6 +10,9 @@
     },
     "environment": {
       "value": "demo"
+    },
+    "maxDurationInMinutes": {
+      "value": 10
     }
   }
 }

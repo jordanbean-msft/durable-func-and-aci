@@ -1,6 +1,5 @@
-param longName string
 param logAnalyticsWorkspaceName string
-param keyVaultName string
+param longName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: toLower(replace('sa${longName}', '-', ''))
@@ -177,18 +176,8 @@ resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
   }
 }
 
-var storageAccountConnectionStringSecretName = 'storageAccountConnectionString'
-
-resource storageAccountConnectionString 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' = {
-  name: '${keyVaultName}/${storageAccountConnectionStringSecretName}'
-  properties: {
-    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(resourceId('Microsoft.Storage/storageAccounts', storageAccount.name), '2019-06-01').keys[0].value}'
-  }
-}
-
 output storageAccountName string = storageAccount.name
 output inputContainerName string = inputContainerName
 output outputContainerName string = outputContainerName
 output inputQueueName string = inputQueueName
 output newBlobCreatedEventGridTopicName string = blobCreatedEventGridTopic.name
-output storageAccountConnectionStringSecretName string = storageAccountConnectionStringSecretName

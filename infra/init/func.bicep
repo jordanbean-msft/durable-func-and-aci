@@ -1,11 +1,10 @@
-param longName string
-param keyVaultName string
-param storageAccountConnectionStringSecretName string
-param storageAccountInputContainerName string
-param storageAccountQueueName string
-param logAnalyticsWorkspaceName string
 param appInsightsName string
+param logAnalyticsWorkspaceName string
+param longName string
 param orchtestrationFunctionAppName string
+param storageAccountInputContainerName string
+param storageAccountName string
+param storageAccountQueueName string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: 'asp-${longName}'
@@ -18,6 +17,10 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   properties: {
     reserved: true
   }
+}
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
+  name: storageAccountName
 }
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
@@ -40,11 +43,11 @@ resource orchtestrationFunction 'Microsoft.Web/sites@2021-01-15' = {
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${storageAccountConnectionStringSecretName})'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(resourceId('Microsoft.Storage/storageAccounts', storageAccount.name), '2019-06-01').keys[0].value}'
         }
         {
           name: 'AZURE_STORAGE_CONNECTION_STRING'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${storageAccountConnectionStringSecretName})'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(resourceId('Microsoft.Storage/storageAccounts', storageAccount.name), '2019-06-01').keys[0].value}'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -65,6 +68,10 @@ resource orchtestrationFunction 'Microsoft.Web/sites@2021-01-15' = {
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'python'
+        }
+        {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
         }
       ]
     }
@@ -90,24 +97,6 @@ resource functionAppDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@20
       {
         category: 'AllMetrics'
         enabled: true
-      }
-    ]
-  }
-}
-
-resource functionAppKeyVaultGetListSecretAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2021-06-01-preview' = {
-  name: '${keyVaultName}/add'
-  properties: {
-    accessPolicies: [
-      {
-        objectId: orchtestrationFunction.identity.principalId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-          ]
-        }
-        tenantId: orchtestrationFunction.identity.tenantId
       }
     ]
   }

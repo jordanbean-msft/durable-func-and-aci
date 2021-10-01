@@ -6,7 +6,7 @@
 # - add azure-functions-durable to requirements.txt
 # - run pip install -r requirements.txt
 
-import logging, os, json
+import os, json
 from azure.storage.blob import (
     BlobServiceClient
 )
