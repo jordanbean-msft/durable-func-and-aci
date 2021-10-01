@@ -114,13 +114,32 @@ Here are the results using the [Azure Storage Explorer](https://docs.microsoft.c
 
 ## Orchestration
 
+The orchestration function manages the overall work process. Each step reports its status back to the orchestration function. It keeps track of the status of all work.
 
+Here is the overall flow:
+
+1.  A HTTP request is received to the Durable Function endpoint
+1.  The orchestration function kicks off (defined in `src/orchestrator/ComputeOrchestrator/__init__.py`)
+1.  The orchestration function generates some input data and begins the orchestration
+1.  For each input data block, a `Compute` function is called (defined in `src/orchestration/Compute/__init__.py`)
+1.  Each `Compute` function writes an input blob to the Azure Blob Storage input container & a message to the Azure Storage Queue with the path to the file
+    - Note that the `Compute` function doesn't call any actual computation function, all it does it put an input file in storage & a path to the file in the queue, EventGrid will then fire and begin computation. This makes it so that the `Compute` function doesn't have to know anything about how the computation actually occurs. They are loosely coupled.
+1.  The Azure Storage Blob input container will fire a `Microsoft.Storage.BlobCreated` EventGrid message. This will get routed to the Logic App that is subscribed to that event
+1.  The Logic App will start up the Azure Container Instance (ACI) if it is shut down (the ACIs are set to shut down after a period of time if they have nothing to process)
+1.  The Azure Container Instance will pull each message off the queue, process the input data & write output data back to blob storage
+1.  When an output blob is created in the Azure Blob Storage output container, another `Microsoft.Storage.BlobCreated` message will get created. Another Azure Function will get called to process this message.
+1.  The Azure Function (defined in `src/orchestrator/ComputeComplete/__init__.py`) will raise an event so the orchestration function is notified that a computation is complete.
+1.  After all the computations are complete (meaning all of the raise events have fired), the orchestration function will report that its status is `Complete`
 
 ## Container compute
 
 Each container is self contained and does not communicate with the other containers. It only reads the next message from the Azure Storage Queue and processes it. The Azure Storage Queue ensures a message is only processed by 1 container. If that container fails to complete the processing of the message, it will be put back on the queue and processed by another container. Once the container has received a message, it downloads the message from the Azure Blob Storage. It then computes the result and writes the result to a different Azure Blob Storage container. It then reports success to the Storage Queue and deletes the original input data. Once the container runs out of messages to process, it will shut-down after the `max_duration` is reached.
 
 ![containerCompute](.img/containerCompute.png)
+
+Here is an example of the container log while processing.
+
+![containerLog](.img/containerLog.png)
 
 ## References
 
