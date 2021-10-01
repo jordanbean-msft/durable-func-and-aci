@@ -4,7 +4,7 @@ param imageVersion string
 param inputQueueName string
 param inputStorageContainerName string
 param longName string
-param maxDurationInMinutes int
+param maxIdleTimeInMinutes int
 param numberOfContainersToCreate int
 param outputStorageContainerName string
 param storageAccountName string
@@ -46,8 +46,8 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2021-03-
               value: outputStorageContainerName
             }
             {
-              name: 'MAX_DURATION_IN_MINUTES'
-              value: maxDurationInMinutes
+              name: 'MAX_IDLE_TIME_IN_MINUTES'
+              value: '${maxIdleTimeInMinutes}'
             }
           ]
           resources: {

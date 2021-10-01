@@ -17,7 +17,7 @@ Install the following prerequisites.
 
 ## Deployment
 
-0.  Create a new resource group in your Azure subscription
+1.  Create a new resource group in your Azure subscription
 
 1.  Navigate to `infra/init` directory
 
@@ -45,7 +45,7 @@ Install the following prerequisites.
 
 1.  Navigate to the `infra/container` directory
 
-1.  Deploy the container infrastructure to Azure (you will have to substitute some of these values for the Azure resource names that were created in the earlier step)
+1.  Deploy the container infrastructure to Azure (you will have to substitute some of these values for the Azure resource names that were created in the earlier step, all of these values can be found in the output of the previous Azure infrastructure deployment)
 
     ```shell
     az deployment group create --resource-group rg-durableFuncAci-ussc-demo --template-file ./main.bicep --parameters ./demo.parameters.json --parameters storageAccountName=sadurablefuncaciusscdemo --parameters containerRegistryName=acrdurableFuncAciusscdemo --parameters inputQueueName=input --parameters imageName=compute --parameters imageVersion=latest --parameters inputStorageContainerName=input --parameters outputStorageContainerName=output --parameters numberOfContainersToCreate=1 --parameters logAnalyticsWorkspaceName=la-durableFuncAci-ussc-demo --parameters newBlobCreatedEventGridTopicName=egt-NewInputBlobCreated-durableFuncAci-ussc-demo --parameters storageAccountInputContainerName=input --parameters aciConnectionName=aci --parameters eventGridConnectionName=azureeventgrid --parameters orchtestrationFunctionAppName=func-durableFuncAci-ussc-demo --parameters storageAccountOutputContainerName=output
@@ -133,9 +133,9 @@ Here is the overall flow:
 
 ## Container compute
 
-Each container is self contained and does not communicate with the other containers. It only reads the next message from the Azure Storage Queue and processes it. The Azure Storage Queue ensures a message is only processed by 1 container. If that container fails to complete the processing of the message, it will be put back on the queue and processed by another container. Once the container has received a message, it downloads the message from the Azure Blob Storage. It then computes the result and writes the result to a different Azure Blob Storage container. It then reports success to the Storage Queue and deletes the original input data. Once the container runs out of messages to process, it will shut-down after the `max_duration` is reached.
+Each container is self contained and does not communicate with the other containers. It only reads the next message from the Azure Storage Queue and processes it. The Azure Storage Queue ensures a message is only processed by 1 container. If that container fails to complete the processing of the message, it will be put back on the queue and processed by another container. Once the container has received a message, it downloads the message from the Azure Blob Storage. It then computes the result and writes the result to a different Azure Blob Storage container. It then reports success to the Storage Queue and deletes the original input data. Once the container runs out of messages to process, it will shut-down after the `max_idle_time_in_minutes` is reached.
 
-![containerCompute](.img/containerCompute.png)
+![containerCompute](.img/computeContainer.png)
 
 Here is an example of the container log while processing.
 

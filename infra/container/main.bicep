@@ -9,7 +9,7 @@ param inputQueueName string
 param inputStorageContainerName string
 param location string
 param logAnalyticsWorkspaceName string
-param maxDurationInMinutes int
+param maxIdleTimeInMinutes int
 param newBlobCreatedEventGridTopicName string
 param numberOfContainersToCreate int
 param orchtestrationFunctionAppName string
@@ -41,7 +41,7 @@ module containerInstanceDeployment 'aci.bicep' = {
     numberOfContainersToCreate: numberOfContainersToCreate
     imageName: imageName
     imageVersion: imageVersion
-    maxDurationInMinutes: maxDurationInMinutes
+    maxIdleTimeInMinutes: maxIdleTimeInMinutes
   }
 }
 

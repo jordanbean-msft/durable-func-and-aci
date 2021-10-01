@@ -42,10 +42,10 @@ def main():
     queue_name = os.getenv("AZURE_STORAGE_QUEUE_NAME")
     input_blob_container_name = os.getenv("AZURE_STORAGE_INPUT_BLOB_CONTAINER_NAME")
     output_blob_container_name = os.getenv("AZURE_STORAGE_OUTPUT_BLOB_CONTAINER_NAME")
-    max_duration = os.getenv("MAX_DURATION_IN_MINUTES")
+    max_idle_time_in_minutes = os.getenv("MAX_IDLE_TIME_IN_MINUTES")
 
     sleep_time_in_seconds = 5
-    max_loop_count = int(max_duration) / 60 / sleep_time_in_seconds
+    max_loop_count = int(max_idle_time_in_minutes) * 60 / sleep_time_in_seconds
 
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
@@ -82,7 +82,9 @@ def main():
 
             input_blob_client.delete_blob()
 
-            loop_count = loop_count + 1
+            loop_count = 0
+
+        loop_count = loop_count + 1
 
         log.info(f"Sleeping for {sleep_time_in_seconds}...")
 

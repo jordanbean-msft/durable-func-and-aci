@@ -11,8 +11,11 @@
     "environment": {
       "value": "demo"
     },
-    "maxDurationInMinutes": {
+    "maxIdleTimeInMinutes": {
       "value": 10
-    }
+    },
+    "numberOfContainersToCreate": {
+      "value": 2
+    } 
   }
 }
