@@ -1,6 +1,6 @@
 # durable-func-and-aci
 
-This demo uses [Azure Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview?tabs=python), Event Grid (https://docs.microsoft.com/en-us/azure/event-grid/overview) & Azure Container Instance (https://docs.microsoft.com/en-us/azure/container-instances/) to provide a general purpose orchestrated compute engine.
+This demo uses [Azure Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview?tabs=python), [Event Grid](https://docs.microsoft.com/en-us/azure/event-grid/overview) & [Azure Container Instance](https://docs.microsoft.com/en-us/azure/container-instances/) to provide a general purpose orchestrated compute engine.
 
 ![architecture](.img/architecture.png)
 
